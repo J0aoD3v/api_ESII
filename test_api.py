@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Tuple
 import math
 
 # Configuração
-API_URL = "http://localhost:8000/api.php"
+API_URL = "http://136.248.121.230/api.php"
 TIMEOUT = 10
 DELAY_BETWEEN_TESTS = 0.1  # Delay entre requisições para não sobrecarregar
 
