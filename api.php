@@ -16,15 +16,34 @@ function resposta($sucesso, $dados, $mensagem = '') {
     exit;
 }
 
-// Validação do método
+// Validacao do metodo
 if (!$metodo) {
-    resposta(false, null, 'Parâmetro "metodo" não informado');
+    resposta(false, null, 'Parametro "metodo" nao informado');
 }
 
 // MÉTODO 1: Calculadora de IMC
 if ($metodo === 'calcular_imc') {
     $peso = floatval($_GET['peso'] ?? $_POST['peso'] ?? 0);
     $altura = floatval($_GET['altura'] ?? $_POST['altura'] ?? 0);
+    
+    // Validar valores infinitos e NaN
+    if (!is_finite($peso) || !is_finite($altura)) {
+        resposta(false, null, 'Peso e altura devem ser valores numericos finitos');
+    }
+    
+    if (is_nan($peso) || is_nan($altura)) {
+        resposta(false, null, 'Peso e altura nao podem ser NaN (Not a Number)');
+    }
+    
+    // Validar overflow (valores extremamente grandes)
+    if ($peso > 1e100 || $altura > 1e100) {
+        resposta(false, null, 'Valores muito grandes (overflow). Use valores razoaveis.');
+    }
+    
+    // Validar underflow (valores extremamente pequenos proximos de zero)
+    if (($peso > 0 && $peso < 1e-100) || ($altura > 0 && $altura < 1e-100)) {
+        resposta(false, null, 'Valores extremamente pequenos (underflow). Use valores razoaveis.');
+    }
     
     if ($peso <= 0 || $altura <= 0) {
         resposta(false, null, 'Peso e altura devem ser maiores que zero');
@@ -51,11 +70,34 @@ if ($metodo === 'verificar_primo') {
     $numero = intval($_GET['numero'] ?? $_POST['numero'] ?? 0);
     
     if ($numero < 2) {
-        resposta(true, ['primo' => false], 'Números menores que 2 não são primos');
+        resposta(true, ['numero' => $numero, 'primo' => false], 'Numeros menores que 2 nao sao primos');
     }
     
+    // Limitar numeros muito grandes para evitar timeout
+    if ($numero > 10000000) {
+        resposta(false, null, 'Numero muito grande para verificacao (limite: 10.000.000). Operacao causaria timeout.');
+    }
+    
+    // Casos especiais otimizados
+    if ($numero == 2) {
+        resposta(true, ['numero' => $numero, 'primo' => true], 'O numero e primo');
+    }
+    
+    if ($numero % 2 == 0) {
+        resposta(true, ['numero' => $numero, 'primo' => false], 'O numero nao e primo');
+    }
+    
+    // Verificação com timeout manual
+    $tempo_inicio = microtime(true);
+    $timeout = 5; // 5 segundos
     $primo = true;
-    for ($i = 2; $i <= sqrt($numero); $i++) {
+    
+    for ($i = 3; $i <= sqrt($numero); $i += 2) {
+        // Verificar timeout a cada 1000 iteracoes
+        if ($i % 1000 == 1 && (microtime(true) - $tempo_inicio) > $timeout) {
+            resposta(false, null, 'Timeout ao verificar numero primo (processamento muito longo)');
+        }
+        
         if ($numero % $i == 0) {
             $primo = false;
             break;
@@ -65,7 +107,7 @@ if ($metodo === 'verificar_primo') {
     resposta(true, [
         'numero' => $numero,
         'primo' => $primo
-    ], $primo ? 'O número é primo' : 'O número não é primo');
+    ], $primo ? 'O numero e primo' : 'O numero nao e primo');
 }
 
 // MÉTODO 3: Gerar sequência Fibonacci
@@ -90,7 +132,7 @@ if ($metodo === 'fibonacci') {
     resposta(true, [
         'quantidade' => $quantidade,
         'sequencia' => $sequencia
-    ], 'Sequência Fibonacci gerada com sucesso');
+    ], 'Sequencia Fibonacci gerada com sucesso');
 }
 
 // MÉTODO 4: Analisar força de senha
@@ -98,10 +140,11 @@ if ($metodo === 'analisar_senha') {
     $senha = $_GET['senha'] ?? $_POST['senha'] ?? '';
     
     if (empty($senha)) {
-        resposta(false, null, 'Senha não informada');
+        resposta(false, null, 'Senha nao informada');
     }
     
-    $tamanho = strlen($senha);
+    // Usar mb_strlen para contar caracteres UTF-8 corretamente (não bytes)
+    $tamanho = mb_strlen($senha, 'UTF-8');
     $tem_minuscula = preg_match('/[a-z]/', $senha);
     $tem_maiuscula = preg_match('/[A-Z]/', $senha);
     $tem_numero = preg_match('/[0-9]/', $senha);
@@ -132,6 +175,6 @@ if ($metodo === 'analisar_senha') {
     ], 'Senha analisada com sucesso');
 }
 
-// Método não encontrado
-resposta(false, null, 'Método "' . $metodo . '" não encontrado. Métodos disponíveis: calcular_imc, verificar_primo, fibonacci, analisar_senha');
+// Metodo nao encontrado
+resposta(false, null, 'Metodo "' . $metodo . '" nao encontrado. Metodos disponiveis: calcular_imc, verificar_primo, fibonacci, analisar_senha');
 ?>

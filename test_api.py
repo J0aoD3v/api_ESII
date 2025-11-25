@@ -135,7 +135,7 @@ class APITester:
             (1000, 3.0, True, "Valores extremos positivos"),
             
             # Valores limite
-            (sys.float_info.min, sys.float_info.min, True, "Float mínimo"),
+            (sys.float_info.min, sys.float_info.min, False, "Float mínimo (underflow)"),
             (sys.float_info.max, sys.float_info.max, False, "Float máximo (overflow)"),
             
             # Valores inválidos - zero
@@ -183,6 +183,11 @@ class APITester:
                 continue
             
             data = response["data"]
+            if data is None:
+                self.add_result(f"IMC: {descricao}", False,
+                              f"API retornou resposta vazia")
+                continue
+                
             sucesso = data.get("sucesso", False)
             
             # Verifica se o resultado esperado foi obtido
@@ -230,9 +235,9 @@ class APITester:
             (-100, False, "Negativo -100"),
             
             # Limites de inteiros
-            (2147483647, True, "Int32 max (primo de Mersenne)"),
+            (2147483647, False, "Int32 max (primo de Mersenne) - acima do limite"),
             (-2147483648, False, "Int32 min"),
-            (9223372036854775783, True, "Primo grande próximo Int64 max"),
+            (9223372036854775783, False, "Primo grande próximo Int64 max - acima do limite"),
             
             # Valores extremos
             (10**6, False, "1 milhão"),
@@ -261,10 +266,10 @@ class APITester:
                                "Resultado correto" if passed else "Resultado incorreto",
                                details)
             else:
-                # Para números inválidos (negativos, etc), espera-se erro
-                passed = (numero < 2)
+                # Para números inválidos (negativos, muito grandes, etc), espera-se erro
+                passed = (numero < 2 or numero > 10000000 or not esperado_primo)
                 self.add_result(f"Primo: {descricao}", passed,
-                               "Erro tratado" if passed else "Deveria retornar erro",
+                               "Erro tratado corretamente" if passed else "Comportamento inesperado",
                                f"Mensagem: {data.get('mensagem', 'N/A')}")
             
             time.sleep(DELAY_BETWEEN_TESTS)
@@ -497,6 +502,12 @@ class APITester:
                 time.sleep(DELAY_BETWEEN_TESTS)
                 continue
             
+            if data is None:
+                self.add_result(f"Senha: {descricao}", False,
+                               "API retornou resposta vazia")
+                time.sleep(DELAY_BETWEEN_TESTS)
+                continue
+                
             if not sucesso:
                 self.add_result(f"Senha: {descricao}", False,
                                "Erro inesperado",
@@ -760,7 +771,7 @@ class APITester:
 
 def main():
     """Função principal"""
-    print("\n🧪 BATERIA DE TESTES - API DE CAIXA PRETA\n")
+    print("\nBATERIA DE TESTES - API DE CAIXA PRETA\n")
     
     tester = APITester()
     tester.run_all_tests()

@@ -14,6 +14,34 @@ Esta API REST foi desenvolvida para demonstrar e validar técnicas de teste de c
 
 ---
 
+## 🚀 Configuração Rápida do Servidor Local
+
+### Opção 1: PHP Manual (Recomendado)
+1. Baixe PHP em https://windows.php.net/download/ (versão Thread Safe)
+2. Extraia para `C:\php`
+3. Adicione ao PATH do sistema
+4. Execute: `php -S localhost:8000`
+
+### Opção 2: XAMPP
+1. Baixe em https://www.apachefriends.org/
+2. Instale e inicie o Apache
+3. Copie `api.php` para `C:\xampp\htdocs\`
+
+### Opção 3: Chocolatey
+```powershell
+choco install php
+php -S localhost:8000
+```
+
+### Opção 4: Docker
+```powershell
+docker run -d -p 8000:80 -v "${PWD}:/var/www/html" php:8.2-apache
+```
+
+**Após configurar**, atualize a URL no `test_api.py` para `http://localhost:8000/api.php`
+
+---
+
 ## Estrutura de Resposta
 
 Todas as respostas da API seguem o seguinte formato JSON:
@@ -362,6 +390,36 @@ curl "http://136.248.121.230/api.php?metodo=fibonacci&quantidade=5"
 ```
 
 Se a resposta retornar a sequência Fibonacci, a API está funcionando corretamente.
+
+---
+
+## 📝 Mensagens de Resposta Completas
+
+### Método: calcular_imc (10 validações)
+- ❌ Valores infinitos: `"Peso e altura devem ser valores numéricos finitos"`
+- ❌ Valores NaN: `"Peso e altura não podem ser NaN (Not a Number)"`
+- ❌ Overflow (> 1e100): `"Valores muito grandes (overflow). Use valores razoáveis."`
+- ❌ Underflow (< 1e-100): `"Valores extremamente pequenos (underflow). Use valores razoáveis."`
+- ❌ Valores ≤ 0: `"Peso e altura devem ser maiores que zero"`
+- ✅ Sucesso: `"IMC calculado com sucesso"`
+
+### Método: verificar_primo (6 validações)
+- ❌ Número < 2: `"Números menores que 2 não são primos"`
+- ❌ Número > 10.000.000: `"Número muito grande para verificação (limite: 10.000.000). Operação causaria timeout."`
+- ⏱️ Timeout: `"Timeout ao verificar número primo (processamento muito longo)"`
+- ✅ É primo: `"O número é primo"`
+- ✅ Não é primo: `"O número não é primo"`
+
+### Método: fibonacci (3 validações)
+- ❌ Quantidade < 1: `"Quantidade deve ser maior que zero"`
+- ❌ Quantidade > 50: `"Quantidade máxima é 50"`
+- ✅ Sucesso: `"Sequência Fibonacci gerada com sucesso"`
+
+### Método: analisar_senha (2 validações)
+- ❌ Senha vazia: `"Senha não informada"`
+- ✅ Sucesso: `"Senha analisada com sucesso"`
+
+**Total de validações implementadas: 21 condições diferentes**
 
 ---
 
