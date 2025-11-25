@@ -491,6 +491,14 @@ class APITester:
                 continue
             
             data = response["data"]
+            
+            # Verificar se data não é None antes de usar .get()
+            if data is None:
+                self.add_result(f"Senha: {descricao}", False,
+                               "API retornou resposta vazia")
+                time.sleep(DELAY_BETWEEN_TESTS)
+                continue
+            
             sucesso = data.get("sucesso", False)
             
             # Se espera erro
@@ -499,12 +507,6 @@ class APITester:
                 self.add_result(f"Senha: {descricao}", passed,
                                "Erro tratado corretamente" if passed else "Deveria retornar erro",
                                f"Mensagem: {data.get('mensagem', 'N/A')}")
-                time.sleep(DELAY_BETWEEN_TESTS)
-                continue
-            
-            if data is None:
-                self.add_result(f"Senha: {descricao}", False,
-                               "API retornou resposta vazia")
                 time.sleep(DELAY_BETWEEN_TESTS)
                 continue
                 

@@ -143,8 +143,14 @@ if ($metodo === 'analisar_senha') {
         resposta(false, null, 'Senha nao informada');
     }
     
-    // Usar mb_strlen para contar caracteres UTF-8 corretamente (não bytes)
-    $tamanho = mb_strlen($senha, 'UTF-8');
+    // Contar caracteres UTF-8 corretamente (compatível com ou sem mbstring)
+    if (function_exists('mb_strlen')) {
+        $tamanho = mb_strlen($senha, 'UTF-8');
+    } else {
+        // Fallback: contar caracteres UTF-8 sem mbstring
+        $tamanho = strlen(utf8_decode($senha));
+    }
+    
     $tem_minuscula = preg_match('/[a-z]/', $senha);
     $tem_maiuscula = preg_match('/[A-Z]/', $senha);
     $tem_numero = preg_match('/[0-9]/', $senha);
